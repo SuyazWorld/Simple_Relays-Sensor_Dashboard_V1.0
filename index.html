@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESP32 Soft UI Dashboard</title>
+<title>ESP32 Soft UI Dashboard V1.2</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-/* ================= WARNA & TEMA (SOFT UI) ================= */
+/* ================= WARNA & TEMA (GRADIENT SOFT UI) ================= */
 :root {
-    --bg: #e6e9ef;
+    /* Light Mode: Soft Blue-Grey Gradient */
+    --bg-gradient: linear-gradient(135deg, #f0f2f5 0%, #e6e9ef 100%);
     --card: #e6e9ef;
     --text: #44475a;
     --muted: #82869a;
@@ -18,65 +19,56 @@
     --danger: #ff5d5d;
     --success: #00b894;
     
-    /* Shadow Neumorphism Terang */
+    /* Light Shadow */
     --shadow-dark: #c8cedc;
     --shadow-light: #ffffff;
     --inner-shadow: inset 6px 6px 12px #c8cedc, inset -6px -6px 12px #ffffff;
 }
 
 body.dark-mode {
-    --bg: #1e2128;
+    /* Dark Mode: Deep Charcoal Gradient */
+    --bg-gradient: linear-gradient(135deg, #23272e 0%, #1e2128 100%);
     --card: #1e2128;
     --text: #f8f9fa;
     --muted: #a0a5b1;
     --accent: #4dabf7;
-    --danger: #ff6b6b;
     
-    /* Shadow Neumorphism Gelap - Disesuaikan agar lebih 'under' */
-    --shadow-dark: #121418; /* Lebih gelap untuk depth */
-    --shadow-light: #2a2e37; /* Shadow terang dibuat lebih redup & menyatu */
-    --inner-shadow: inset 6px 6px 12px #121418, inset -6px -6px 12px #2a2e37;
+    /* FIX SHADOW DARKMODE: Lebih halus & transparan agar tidak kotor */
+    --shadow-dark: rgba(0, 0, 0, 0.45); 
+    --shadow-light: rgba(255, 255, 255, 0.04); 
+    --inner-shadow: inset 4px 4px 10px rgba(0,0,0,0.5), inset -4px -4px 10px rgba(255,255,255,0.02);
 }
 
 body {
     margin: 0;
     padding: 40px 20px;
     min-height: 100vh;
-    background-color: var(--bg);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     font-family: 'Inter', sans-serif;
     color: var(--text);
     transition: all 0.4s ease;
 }
 
-/* ================= HEADER (FIXED RESPONSIVE) ================= */
+/* ================= HEADER & BADGES ================= */
 .header {
     max-width: 1000px;
     margin: 0 auto 40px auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Menghindari tabrakan di layar kecil */
+    flex-wrap: wrap;
     gap: 20px;
 }
 
-.brand {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.header h2 {
+.brand h2 {
     font-weight: 800;
     letter-spacing: -1px;
     margin: 0;
-    font-size: 24px;
-}
-
-.header small {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
+    font-size: 26px;
+    background: linear-gradient(to right, var(--accent), var(--success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .badge-container {
@@ -85,17 +77,17 @@ body {
 }
 
 .badge {
-    padding: 12px 18px;
-    border-radius: 16px;
+    padding: 10px 16px;
+    border-radius: 14px;
     background: var(--card);
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-    font-size: 12px;
-    font-weight: 600;
+    box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+    font-size: 11px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 .status-dot {
@@ -104,88 +96,70 @@ body {
     border-radius: 50%;
     background: var(--muted);
 }
-
-.connected .status-dot { background: var(--success); box-shadow: 0 0 10px var(--success); }
+.connected .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
 .disconnected .status-dot { background: var(--danger); }
 
-/* ================= GRID ================= */
+/* ================= GRID & CARDS ================= */
 .grid {
     max-width: 1000px;
     margin: auto;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 25px;
 }
 
-/* ================= CARD ================= */
 .card {
     background: var(--card);
-    border-radius: 30px;
-    padding: 30px;
+    border-radius: 24px;
+    padding: 25px;
     text-align: center;
-    /* Efek bayangan utama */
-    box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: 0.3s;
 }
 
-.card:hover { 
-    transform: translateY(-5px); 
-}
+.card:hover { transform: translateY(-5px); }
 
 .title {
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
     color: var(--muted);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.2px;
 }
 
 .value {
-    font-size: 32px;
-    font-weight: 700;
+    font-size: 36px;
+    font-weight: 800;
     color: var(--accent);
+    text-shadow: 2px 2px 4px var(--shadow-dark);
 }
 
 /* ================= BUTTONS ================= */
-.btn-group {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
+.btn-group { display: flex; gap: 12px; }
 
 button {
     flex: 1;
-    padding: 14px;
-    border-radius: 15px;
+    padding: 12px;
+    border-radius: 12px;
     border: none;
     font-weight: 700;
     font-family: 'Inter', sans-serif;
     background: var(--card);
     color: var(--text);
-    box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
 
 button:active {
     box-shadow: var(--inner-shadow);
-    transform: scale(0.96);
+    transform: scale(0.95);
 }
 
-.btn-on:hover { color: var(--accent); }
-.btn-off:hover { color: var(--danger); }
-
-/* ================= RESPONSIVE ================= */
-@media(max-width:900px){ 
-    .grid { grid-template-columns: repeat(2,1fr); } 
-}
-
-@media(max-width:600px){ 
-    .grid { grid-template-columns: 1fr; }
-    .header { justify-content: center; text-align: center; }
-    .brand { align-items: center; }
-}
+@media(max-width:900px){ .grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:600px){ .grid { grid-template-columns: 1fr; } }
 
 </style>
 </head>
@@ -194,13 +168,17 @@ button:active {
 
 <div class="header">
     <div class="brand">
-        <h2>IoT DashboardZZ V1.1</h2>
-        <small>Simple Relays and Sensor Dashboards</small>
+        <h2>IoT DashboardZZ V1.2</h2>
+        <small>Smart Control & Real-time Sensors</small>
     </div>
     <div class="badge-container">
         <div class="badge disconnected" id="mqttStatusBadge">
             <span class="status-dot"></span>
-            <span id="mqttStatusText">MQTT: Disconnected</span>
+            <span id="mqttStatusText">Broker: Offline</span>
+        </div>
+        <div class="badge disconnected" id="espStatusBadge">
+            <span class="status-dot"></span>
+            <span id="espStatusText">ESP32: Offline</span>
         </div>
         <div class="badge" onclick="toggleTheme()">
             <span id="themeIcon">🌙</span>
@@ -212,102 +190,186 @@ button:active {
     <div class="card">
         <div class="title">Lampu Utama</div>
         <div class="btn-group">
-            <button class="btn-on" onclick="fungsipublishled1('ON')">ON</button>
-            <button class="btn-off" onclick="fungsipublishled1('OFF')">OFF</button>
+            <button style="color:var(--success)" onclick="fungsipublishled1('ON')">ON</button>
+            <button style="color:var(--danger)" onclick="fungsipublishled1('OFF')">OFF</button>
         </div>
     </div>
-
     <div class="card">
         <div class="title">Lampu Taman</div>
         <div class="btn-group">
-            <button class="btn-on" onclick="fungsipublishled2('ON')">ON</button>
-            <button class="btn-off" onclick="fungsipublishled2('OFF')">OFF</button>
+            <button style="color:var(--success)" onclick="fungsipublishled2('ON')">ON</button>
+            <button style="color:var(--danger)" onclick="fungsipublishled2('OFF')">OFF</button>
         </div>
     </div>
-
     <div class="card">
         <div class="title">Buzzer Alarm</div>
         <div class="btn-group">
-            <button class="btn-on" onclick="fungsipublish_bz('ON')">ON</button>
-            <button class="btn-off" onclick="fungsipublish_bz('OFF')">OFF</button>
+            <button style="color:var(--accent)" onclick="fungsipublish_bz('ON')">ON</button>
+            <button style="color:var(--muted)" onclick="fungsipublish_bz('OFF')">OFF</button>
         </div>
     </div>
 
-    <div class="card"><div class="title">Status 1</div><div class="value" id="status1">--</div></div>
-    <div class="card"><div class="title">Status 2</div><div class="value" id="status2">--</div></div>
-    <div class="card"><div class="title">Status 3</div><div class="value" id="status3">--</div></div>
+    <div class="card"><div class="title">Relay 1 Status</div><div class="value" id="status1">--</div></div>
+    <div class="card"><div class="title">Relay 2 Status</div><div class="value" id="status2">--</div></div>
+    <div class="card"><div class="title">Alarm Status</div><div class="value" id="status3">--</div></div>
 
-    <div class="card"><div class="title">Ultrasonic</div><div class="value" id="ultras">--</div></div>
-    <div class="card"><div class="title">Suhu ESP32</div><div class="value" id="suhuzz">--</div></div>
-    <div class="card"><div class="title">Nilai Acak</div><div class="value" id="nilaiacak1">--</div></div>
+    <div class="card"><div class="title">Distance (cm)</div><div class="value" id="ultras">--</div></div>
+    <div class="card"><div class="title">ESP Temp (°C)</div><div class="value" id="suhuzz">--</div></div>
+    <div class="card"><div class="title">Random Value</div><div class="value" id="nilaiacak1">--</div></div>
 </div>
 
 <script>
-/* ===== UI LOGIC (DARK/LIGHT MODE) ===== */
+/* UI FUNCTIONS */
 function toggleTheme(){
     const body = document.body;
     const icon = document.getElementById("themeIcon");
     body.classList.toggle("dark-mode");
-    
     icon.innerText = body.classList.contains("dark-mode") ? "☀️" : "🌙";
 }
 
-function updateMQTTStatus(isConnected) {
-    const badge = document.getElementById("mqttStatusBadge");
-    const text = document.getElementById("mqttStatusText");
-    
-    if(isConnected) {
+function updateBadge(idBadge, idText, isOnline, label) {
+    const badge = document.getElementById(idBadge);
+    const text = document.getElementById(idText);
+    if(isOnline) {
         badge.classList.replace("disconnected", "connected");
-        text.innerText = "MQTT: Connected";
+        text.innerText = label + ": Online";
     } else {
         badge.classList.replace("connected", "disconnected");
-        text.innerText = "MQTT: Disconnected";
+        text.innerText = label + ": Offline";
     }
 }
-</script>
 
-<script>
-// Logic MQTT tetap menggunakan yang sebelumnya (Sudah diperbaiki)
+/* MQTT LOGIC */
+/* ================= 1. PENGATURAN KONEKSI ================= */
+
+// Alamat Broker (Server MQTT). WSS artinya koneksi aman (Secure WebSocket)
 const brokerUrl = "wss://broker.avisha.id:8084/mqtt"; 
-const connectionOptions = { 
+
+// Data login kamu. Ibarat kunci untuk masuk ke server MQTT
+const opsi = { 
     username: "ARYZZ_SUYASOWORLD23", 
     password: "ProjectProto12",
-    clean: true 
+    clean: true // Artinya memulai sesi baru setiap kali terhubung
 }; 
 
-const client = mqtt.connect(brokerUrl, connectionOptions);
+// Perintah untuk mulai menyambungkan dashboard kamu ke server MQTT
+const client = mqtt.connect(brokerUrl, opsi);
 
-const topicsensor_utama = "ARYZZ_SUYASOWORLD23/#";
-const topicSensor  = "ARYZZ_SUYASOWORLD23/DataOUT/ultrasonic";
-const topicSensor2 = "ARYZZ_SUYASOWORLD23/DataOUT/suhuESP";
-const topicSensor3 = "ARYZZ_SUYASOWORLD23/DataOUT/nilaiacak";
-const topicLampu1  = "ARYZZ_SUYASOWORLD23/Datain/Lampu1";
-const topicLampu2  = "ARYZZ_SUYASOWORLD23/Datain/Lampu2";
-const topicBZ      = "ARYZZ_SUYASOWORLD23/Datain/Bzz";
 
-client.on("connect", () => {
-    updateMQTTStatus(true); 
-    client.subscribe(topicsensor_utama, { qos: 1 }); 
+/* ================= 2. FUNGSI SAAT TERHUBUNG ================= */
+
+// Fungsi ini akan otomatis jalan HANYA SAAT dashboard berhasil nyambung ke broker
+client.on("connect", function() {
+    console.log("Mantap! Sudah terhubung ke MQTT"); // Muncul di Inspect Console buat cek
+
+    // Memanggil fungsi updateBadge untuk mengubah titik jadi HIJAU (true) dan teks jadi ONLINE
+    updateBadge("mqttStatusBadge", "mqttStatusText", true, "Broker"); 
+    
+    // Memberitahu broker bahwa dashboard ingin "mendengarkan" semua data dari channel ARYZZ_SUYASOWORLD23
+    // Tanda /# artinya semua sub-topik (suhu, lampu, dll) akan masuk ke sini
+    client.subscribe("ARYZZ_SUYASOWORLD23/#"); 
 });
 
-client.on("offline", () => {
-    updateMQTTStatus(false);
+
+/* ================= 3. FUNGSI SAAT KONEKSI PUTUS ================= */
+
+// Fungsi ini akan jalan kalau internet mati atau server broker bermasalah
+client.on("offline", function() {
+    // Mengubah titik jadi MERAH (false) dan teks jadi OFFLINE
+    updateBadge("mqttStatusBadge", "mqttStatusText", false, "Broker");
+    
+    // Karena broker mati, otomatis alat (ESP32) juga dianggap offline oleh dashboard
+    updateBadge("espStatusBadge", "espStatusText", false, "ESP32");
 });
 
-client.on("message", (topiczx, message) => {
-    const msgString = message.toString();
-    if(topiczx === topicSensor2) document.getElementById("suhuzz").innerHTML = msgString;
-    if(topiczx === topicSensor)  document.getElementById("ultras").innerHTML = msgString;
-    if(topiczx === topicSensor3) document.getElementById("nilaiacak1").innerHTML = msgString;
-    if(topiczx === topicLampu1)  document.getElementById("status1").innerHTML = msgString;
-    if(topiczx === topicLampu2)  document.getElementById("status2").innerHTML = msgString;
-    if(topiczx === topicBZ)      document.getElementById("status3").innerHTML = msgString;
+
+/* ================= 4. FUNGSI TERIMA DATA (IF-ELSE) ================= */
+
+// Ini adalah "satpam" yang bertugas memeriksa setiap pesan yang masuk dari broker
+client.on("message", function(topic, message) {
+    
+    // Topic: alamat pesan (contoh: ARYZZ_SUYASOWORLD23/DataOUT/suhuESP)
+    // Message: isi pesannya (contoh: 30)
+    let msg = message.toString(); // Mengubah data mentah menjadi teks string agar bisa dibaca
+
+    // CEK: Apakah topiknya alamat SUHU?
+    if (topic === "ARYZZ_SUYASOWORLD23/DataOUT/suhuESP") {
+        // Jika iya, cari ID 'suhuzz' di HTML lalu ganti teksnya jadi isi pesan (msg)
+        document.getElementById("suhuzz").innerText = msg;
+    } 
+    
+    // CEK: Apakah topiknya alamat ULTRASONIC?
+    else if (topic === "ARYZZ_SUYASOWORLD23/DataOUT/ultrasonic") {
+        // Jika iya, ganti isi teks di ID 'ultras'
+        document.getElementById("ultras").innerText = msg;
+    }
+    else if(topic === "ARYZZ_SUYASOWORLD23/DataOUT/nilaiacak") {
+        document.getElementById("nilaiacak1").innerHTML = msg;
+    }
+    // CEK: Apakah topiknya status ONLINE/OFFLINE alat (ESP32)?
+    else if (topic === "ARYZZ_SUYASOWORLD23/DataOUT/Status/ESP32-01") {
+        // Jika isi pesannya "Online", nyalakan lampu hijau di badge ESP32
+        if (msg === "Online") {
+            updateBadge("espStatusBadge", "espStatusText", true, "ESP32");
+        } 
+        // Jika isinya selain itu, matikan (merah)
+        else {
+            updateBadge("espStatusBadge", "espStatusText", false, "ESP32");
+        }
+    }
+    
+    // CEK: Apakah topiknya status LAMPU 1? (Supaya teks ON/OFF di bawah tombol update otomatis)
+    else if (topic === "ARYZZ_SUYASOWORLD23/Datain/Lampu1") {
+        document.getElementById("status1").innerText = msg;
+    }
+    else if (topic === "ARYZZ_SUYASOWORLD23/Datain/Lampu2") {
+        document.getElementById("status2").innerText = msg;
+    }
+    else if (topic === "ARYZZ_SUYASOWORLD23/Datain/Bzz") {
+        document.getElementById("status3").innerText = msg;
+    }
 });
 
-const pubOptions = { qos: 1, retain: true };
-function fungsipublishled1(message) { client.publish(topicLampu1, message, pubOptions); }
-function fungsipublishled2(message) { client.publish(topicLampu2, message, pubOptions); }
-function fungsipublish_bz(message) { client.publish(topicBZ, message, pubOptions); }
+
+/* ================= 5. FUNGSI KIRIM PERINTAH (PUBLISH) ================= */
+
+// Fungsi ini dipanggil saat kamu klik tombol di HTML
+// Parameter 'perintah' isinya adalah teks 'ON' atau 'OFF'
+function fungsipublishled1(perintah) {
+    // Mengirim perintah (ON/OFF) ke alamat (Topic) Lampu 1
+    // retain: true artinya broker akan menyimpan pesan terakhir agar alat baru nyala langsung tahu statusnya
+    client.publish("ARYZZ_SUYASOWORLD23/Datain/Lampu1", perintah, { retain: true });
+}
+
+// Sama seperti di atas, tapi untuk channel Lampu 2
+function fungsipublishled2(perintah) {
+    client.publish("ARYZZ_SUYASOWORLD23/Datain/Lampu2", perintah, { retain: true });
+}
+function fungsipublish_bz(perintah) {
+    client.publish("ARYZZ_SUYASOWORLD23/Datain/Bzz", perintah, { retain: true });
+}
+
+
+/* ================= 6. FUNGSI GANTI WARNA & TEKS (UI) ================= */
+
+// Ini adalah fungsi pembantu (helper) supaya kita tidak tulis kode panjang berulang kali
+function updateBadge(idBadge, idText, isOnline, label) {
+    let badge = document.getElementById(idBadge); // Mencari kotak badge
+    let text = document.getElementById(idText);   // Mencari teks di dalam badge
+    
+    // Jika isOnline bernilai 'true' (HIJAU)
+    if(isOnline === true) {
+        // Ganti class CSS 'disconnected' (merah) menjadi 'connected' (hijau)
+        badge.classList.replace("disconnected", "connected");
+        // Ganti teksnya. Contoh: "Broker" + ": Online" -> Broker: Online
+        text.innerText = label + ": Online";
+    } 
+    // Jika isOnline bernilai 'false' (MERAH)
+    else {
+        badge.classList.replace("connected", "disconnected");
+        text.innerText = label + ": Offline";
+    }
+}
 </script>
 
 </body>
